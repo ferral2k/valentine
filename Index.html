@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Valentine?</title>
+  <style>
+    :root{
+      --bg1:#ffdee9;
+      --bg2:#b5fffc;
+      --card:#ffffffcc;
+      --text:#111;
+      --accent:#ff3b7a;
+      --accent2:#1f7aff;
+      --shadow: 0 20px 60px rgba(0,0,0,.18);
+      --radius: 22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 800px at 10% 10%, var(--bg1), transparent 60%),
+                  radial-gradient(1200px 800px at 90% 90%, var(--bg2), transparent 60%),
+                  #fff;
+      display:grid;
+      place-items:center;
+      overflow:hidden;
+      color:var(--text);
+    }
+
+    /* --- Floating GIF background (hidden until "Yes") --- */
+    #bgFloat{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      opacity:0;
+      transition: opacity .45s ease;
+    }
+    body.yes #bgFloat{ opacity:.28; } /* stell das hoch/runter */
+
+    .bgGif{
+      position:absolute;
+      left:0;
+      top:0;
+      width: var(--s);
+      height: var(--s);
+      object-fit: contain;
+      opacity: .95;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.14));
+      transform: translate3d(var(--x), var(--y), 0) rotate(var(--r));
+      animation: drift var(--t) ease-in-out infinite alternate;
+      will-change: transform;
+    }
+    @keyframes drift{
+      from{
+        transform: translate3d(var(--x), var(--y), 0) rotate(var(--r));
+      }
+      to{
+        transform: translate3d(calc(var(--x) + var(--dx)), calc(var(--y) + var(--dy)), 0) rotate(calc(var(--r) + var(--dr)));
+      }
+    }
+
+    .card{
+      width:min(520px, calc(100vw - 32px));
+      padding:28px 24px 24px;
+      border-radius:var(--radius);
+      background:var(--card);
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.55);
+      position:relative;
+      z-index:2;
+    }
+
+    /* Top GIF above the question */
+    .top-gif{
+      display:block;
+      width: 110px;
+      height: 110px;
+      object-fit: contain;
+      margin: 0 auto 6px;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.12));
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    h1{
+      margin: 0 0 10px;
+      font-size: clamp(26px, 4vw, 38px);
+      letter-spacing: -0.02em;
+      text-align:center;
+    }
+    p{
+      margin:0 0 18px;
+      text-align:center;
+      opacity:.85;
+    }
+
+    .stage{
+      position:relative;
+      height: 120px;
+      margin-top: 8px;
+    }
+
+    .btn{
+      appearance:none;
+      border:0;
+      padding:14px 18px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 16px;
+      cursor:pointer;
+      transition: transform .12s ease, filter .12s ease, box-shadow .12s ease;
+      box-shadow: 0 10px 25px rgba(0,0,0,.12);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn:hover{ filter: brightness(1.02); }
+
+    #yesBtn{
+      background: linear-gradient(135deg, var(--accent), #ff7aa7);
+      color:white;
+      position:absolute;
+      left: 18%;
+      top: 40px;
+    }
+    #noBtn{
+      background: linear-gradient(135deg, var(--accent2), #79b0ff);
+      color:white;
+      position:absolute;
+      left: 58%;
+      top: 40px;
+    }
+
+    .result{
+      display:none;
+      text-align:center;
+      padding: 10px 8px 0;
+    }
+    .result h2{
+      margin: 6px 0 6px;
+      font-size: 28px;
+    }
+    .result .small{
+      opacity:.85;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    /* floating hearts */
+    .heart{
+      position:fixed;
+      left:0; top:0;
+      font-size: 18px;
+      pointer-events:none;
+      animation: floatUp linear forwards;
+      filter: drop-shadow(0 8px 12px rgba(0,0,0,.18));
+      z-index:3;
+    }
+    @keyframes floatUp{
+      from{ transform: translate(var(--x), var(--y)) scale(.9); opacity: 0; }
+      10%{ opacity: 1; }
+      to{ transform: translate(calc(var(--x) + var(--dx)), calc(var(--y) - var(--rise))) scale(1.3); opacity: 0; }
+    }
+
+    .shake{
+      animation: shake .28s ease-in-out 1;
+    }
+    @keyframes shake{
+      0%,100%{ transform: translateX(0); }
+      25%{ transform: translateX(-6px); }
+      75%{ transform: translateX(6px); }
+    }
+
+    .footer{
+      margin-top: 14px;
+      text-align:center;
+      font-size: 12px;
+      opacity:.6;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- floating background gifs (appear after "Yes") -->
+  <div id="bgFloat" aria-hidden="true"></div>
+
+  <div class="card" id="card">
+    <!-- GIF above the question -->
+    <img
+      class="top-gif"
+      src="https://media.tenor.com/xxPgBuwmddQAAAAj/cat.gif"
+      alt="cat"
+    />
+
+    <h1 id="question">Will you be my Valentine?</h1>
+    <p id="sub">Du weißt was zu klicken ist 😇</p>
+
+    <div class="stage" id="stage">
+      <button class="btn" id="yesBtn">Yes</button>
+      <button class="btn" id="noBtn">No</button>
+    </div>
+
+    <div class="result" id="result">
+      <h2>Yessss! 💘</h2>
+      <div id="customText"></div>
+      <div class="small">Dein Pooksie</div>
+    </div>
+
+    <div class="footer"></div>
+  </div>
+
+  <script>
+    // --- Customization (edit these) ---
+    const HER_NAME = "Pooksie";         // z.B. "Selin"
+    const YOUR_NAME = "Daniel";         // dein Name
+    const MESSAGE = `Ich liebe dich ${HER_NAME}!!!.<br>Du hast den richtigen Knopf gedrückt!!!`;
+
+    // Background GIF pool (mix & match)
+    const BG_GIFS = [
+      "https://media.tenor.com/ejEmffduuQYAAAAj/happy-cat.gif",
+      "https://media1.tenor.com/m/-85aqzQRqSUAAAAd/gonryon-yippie.gif",
+      "https://media1.tenor.com/m/nD7pFHPWYPMAAAAd/pookie.gif",
+      "https://media.tenor.com/3GLW1XkDL-oAAAAj/tkthao219-bubududu.gif",
+      "https://media.tenor.com/fQ0oZELv1y4AAAAj/bubu-dudu-sseeyall.gif"
+    ];
+
+    // --- Elements ---
+    const stage = document.getElementById("stage");
+    const yesBtn = document.getElementById("yesBtn");
+    const noBtn  = document.getElementById("noBtn");
+    const result = document.getElementById("result");
+    const card   = document.getElementById("card");
+    const customText = document.getElementById("customText");
+    const bgFloat = document.getElementById("bgFloat");
+
+    customText.innerHTML = `<p style="margin:0; font-size:16px; opacity:.9">${MESSAGE}</p>
+      <p style="margin:10px 0 0; font-weight:700">${YOUR_NAME} 💖</p>`;
+
+    // Keep "No" inside the stage bounds
+    function moveNoButton() {
+      const pad = 8;
+      const stageRect = stage.getBoundingClientRect();
+      const btnRect = noBtn.getBoundingClientRect();
+
+      const maxX = stageRect.width - btnRect.width - pad;
+      const maxY = stageRect.height - btnRect.height - pad;
+
+      const x = Math.max(pad, Math.random() * maxX);
+      const y = Math.max(pad, Math.random() * maxY);
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top  = y + "px";
+    }
+
+    // On hover / tap, dodge
+    noBtn.addEventListener("mouseenter", moveNoButton);
+    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNoButton(); }, {passive:false});
+    noBtn.addEventListener("click", () => {
+      card.classList.remove("shake");
+      void card.offsetWidth;
+      card.classList.add("shake");
+      moveNoButton();
+    });
+
+    // On yes: show message + hearts + floating gif background
+    yesBtn.addEventListener("click", () => {
+      document.body.classList.add("yes");
+      stage.style.display = "none";
+      result.style.display = "block";
+      launchHearts(140);
+
+      // Spawn floating background gifs once
+      if (!bgFloat.dataset.spawned) {
+        bgFloat.dataset.spawned = "1";
+        spawnBackgroundGifs(12); // Anzahl der GIFs im Hintergrund
+      }
+    });
+
+    function spawnBackgroundGifs(count=10){
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+
+      for(let i=0;i<count;i++){
+        const img = document.createElement("img");
+        img.className = "bgGif";
+        img.alt = "";
+
+        const src = BG_GIFS[Math.floor(Math.random() * BG_GIFS.length)];
+        img.src = src;
+
+        const size = rand(90, 190);
+        const x = rand(-40, w - size + 40);
+        const y = rand(-40, h - size + 40);
+
+        // Drift distances
+        const dx = rand(-220, 220);
+        const dy = rand(-180, 180);
+
+        // Rotation
+        const r  = rand(-18, 18) + "deg";
+        const dr = rand(-20, 20) + "deg";
+
+        // Duration
+        const t = rand(6, 14) + "s";
+
+        img.style.setProperty("--s", size + "px");
+        img.style.setProperty("--x", x + "px");
+        img.style.setProperty("--y", y + "px");
+        img.style.setProperty("--dx", dx + "px");
+        img.style.setProperty("--dy", dy + "px");
+        img.style.setProperty("--r", r);
+        img.style.setProperty("--dr", dr);
+        img.style.setProperty("--t", t);
+
+        // Slightly stagger start by random delay
+        img.style.animationDelay = (-rand(0, 8000) / 1000) + "s";
+
+        bgFloat.appendChild(img);
+      }
+    }
+
+    // Hearts
+    function launchHearts(count=80){
+      const emojis = ["💖","💘","💝","💕","💗","💓","❤️"];
+      for(let i=0;i<count;i++){
+        setTimeout(()=>spawnHeart(emojis[Math.floor(Math.random()*emojis.length)]), i*12);
+      }
+    }
+
+    function spawnHeart(char){
+      const h = document.createElement("div");
+      h.className = "heart";
+      h.textContent = char;
+
+      const startX = Math.random()*window.innerWidth;
+      const startY = window.innerHeight + 20 + Math.random()*120;
+
+      const dx = (Math.random()*240 - 120) + "px";
+      const rise = (380 + Math.random()*520) + "px";
+      const dur = (2.2 + Math.random()*1.6);
+
+      h.style.setProperty("--x", startX + "px");
+      h.style.setProperty("--y", startY + "px");
+      h.style.setProperty("--dx", dx);
+      h.style.setProperty("--rise", rise);
+      h.style.animationDuration = dur + "s";
+      h.style.fontSize = (16 + Math.random()*22) + "px";
+
+      document.body.appendChild(h);
+      setTimeout(()=>h.remove(), (dur*1000)+200);
+    }
+
+    function rand(min, max){ return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+    // initial nice placement
+    moveNoButton();
+
+    // keep floating bg responsive on resize (optional, simple reset)
+    window.addEventListener("resize", () => {
+      if (bgFloat.dataset.spawned) {
+        bgFloat.innerHTML = "";
+        spawnBackgroundGifs(12);
+      }
+    });
+  </script>
+</body>
+</html>
